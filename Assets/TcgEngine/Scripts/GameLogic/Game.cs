@@ -629,11 +629,16 @@ namespace TcgEngine
     public enum GamePhase
     {
         None = 0,
-        Mulligan = 5,
-        StartTurn = 10, //Start of turn resolution
-        SideDeckSelection = 12, //Simultaneous Side Card selection
-        Main = 20,      //Main play phase
-        EndTurn = 30,   //End of turn resolutions
+        Draft = 2,              // NEW - Draft phase at game start
+        Mulligan = 5,           // Original - kept as-is, will likely be removed
+        StartTurn = 10,         // Original - Start of turn resolution
+        SideDeckSelection = 12, // Original - Simultaneous Side Card selection
+        CardPlay = 15,          // NEW - The 1-2-2-1 pattern phase
+        Main = 20,              // Original - Main play phase (might be replaced by CardPlay)
+        Resolution = 25,        // NEW - Round resolution phase
+        EndTurn = 30,           // Original - End of turn resolutions
+        EndRound = 35,          // NEW - End of round cleanup
+        GameEnd = 40            // NEW - Game over state
     }
 
     [System.Serializable]
