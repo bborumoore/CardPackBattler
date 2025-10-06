@@ -45,6 +45,9 @@ namespace TcgEngine
         public List<CardStatus> ongoing_status = new List<CardStatus>();    //Current ongoing traits the cards has
 
         public List<ActionHistory> history_list = new List<ActionHistory>();  //History of actions performed by the player
+        
+        public List<Card> cards_side = new List<Card>();    // Cards in the player's side deck
+        public bool side_deck_selected = false;              // Has player selected from side deck this turn
 
         public Player(int id) { this.player_id = id; }
 
@@ -74,6 +77,7 @@ namespace TcgEngine
             cards_discard.Remove(card);
             cards_secret.Remove(card);
             cards_temp.Remove(card);
+            cards_side.Remove(card);
             UnequipFromAllCards(card);
         }
 
@@ -184,6 +188,20 @@ namespace TcgEngine
             return card != null && GetBoardCard(card.uid) != null;
         }
 
+        public Card GetSideCard(string uid)
+        {
+            foreach (Card card in cards_side)
+            {
+                if (card.uid == uid)
+                    return card;
+            }
+            return null;
+        }
+
+        public bool HasSideCards()
+        {
+            return cards_side.Count > 0;
+        }
 
         //---- Slots ---------
 
@@ -535,24 +553,24 @@ namespace TcgEngine
 
         //---- Action Check ---------
 
-        public virtual bool CanPayMana(Card card)
-        {
-            if (card.CardData.IsDynamicManaCost())
-                return true;
-            return mana >= card.GetMana();
-        }
+        // public virtual bool CanPayMana(Card card)
+        // {
+        //     if (card.CardData.IsDynamicManaCost())
+        //         return true;
+        //     return mana >= card.GetMana();
+        // }
 
-        public virtual void PayMana(Card card)
-        {
-            if (!card.CardData.IsDynamicManaCost())
-                mana -= card.GetMana();
-        }
+        // public virtual void PayMana(Card card)
+        // {
+        //     if (!card.CardData.IsDynamicManaCost())
+        //         mana -= card.GetMana();
+        // }
 
-        public virtual bool CanPayAbility(Card card, AbilityData ability)
-        {
-            bool exhaust = !card.exhausted || !ability.exhaust;
-            return exhaust && mana >= ability.mana_cost;
-        }
+        // public virtual bool CanPayAbility(Card card, AbilityData ability)
+        // {
+        //     bool exhaust = !card.exhausted || !ability.exhaust;
+        //     return exhaust && mana >= ability.mana_cost;
+        // }
 
         public virtual bool IsDead()
         {
@@ -581,8 +599,8 @@ namespace TcgEngine
 
             dest.hp = source.hp;
             dest.hp_max = source.hp_max;
-            dest.mana = source.mana;
-            dest.mana_max = source.mana_max;
+            // dest.mana = source.mana;
+            // dest.mana_max = source.mana_max;
             dest.kill_count = source.kill_count;
 
             Card.CloneNull(source.hero, ref dest.hero);

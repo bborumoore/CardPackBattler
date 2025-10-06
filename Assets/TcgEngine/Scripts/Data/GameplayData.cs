@@ -14,11 +14,12 @@ namespace TcgEngine
     {
         [Header("Gameplay")]
         public int hp_start = 20;
-        public int mana_start = 1;
-        public int mana_per_turn = 1;
-        public int mana_max = 10;
+        public int mana_start = 0;
+        public int mana_per_turn = 0;
+        public int mana_max = 0;
         public int cards_start = 5;
-        public int cards_per_turn = 1;
+        public int cards_per_turn = 5;
+        public int side_cards_per_turn = 1;
         public int cards_max = 10;
         public float turn_duration = 30f;
         public CardData second_bonus;
@@ -26,7 +27,12 @@ namespace TcgEngine
 
         [Header("Deckbuilding")]
         public int deck_size = 30;
-        public int deck_duplicate_max = 2;
+        // public int deck_duplicate_max = 2;
+
+        [Header("Side Deck")]
+        public int side_deck_size = 10;           // Number of cards in side deck
+        public bool side_deck_visible = true;     // Side decks visible to both players (always true for your design)
+
 
         [Header("Buy/Sell")]
         public float sell_ratio = 0.8f;

@@ -33,7 +33,7 @@ namespace TcgEngine.AI
 
             if (game_data.IsPlayerTurn(player) && !gameplay.IsResolving())
             {
-                if(!is_playing && game_data.selector == SelectorType.None && game_data.current_player == player_id)
+                if (!is_playing && game_data.selector == SelectorType.None && game_data.current_player == player_id)
                 {
                     is_playing = true;
                     TimeTool.StartCoroutine(AiTurn());
@@ -77,7 +77,59 @@ namespace TcgEngine.AI
                 is_selecting = true;
                 TimeTool.StartCoroutine(AiSelectMulligan());
             }
+
+            if (!is_selecting && game_data.phase == GamePhase.SideDeckSelection)
+            {
+                if (!player.side_deck_selected && player.HasSideCards())
+                {
+                    is_selecting = true;
+                    TimeTool.StartCoroutine(AiSelectSideDeck());
+                }
+            }
+            
+             // Existing turn play check...
+            if (!is_playing && game_data.IsPlayerActionTurn(player))
+            {
+                is_playing = true;
+                TimeTool.StartCoroutine(AiTurn());
+            }
+
+            // Reset flags when turn ends
+            if (!game_data.IsPlayerTurn(player))
+            {
+                is_playing = false;
+            }
         }
+
+        // Add new coroutine for side deck selection:
+        private IEnumerator AiSelectSideDeck()
+        {
+            yield return new WaitForSeconds(Random.Range(0.5f, 1.5f)); // Random delay for realism
+
+            SelectSideDeckCard();
+
+            is_selecting = false;
+        }
+
+        // Add the selection method:
+        public void SelectSideDeckCard()
+        {
+            if (!CanPlay())
+                return;
+
+            Game game_data = gameplay.GetGameData();
+            Player player = game_data.GetPlayer(player_id);
+            
+            if (game_data.phase == GamePhase.SideDeckSelection && player.HasSideCards() && !player.side_deck_selected)
+            {
+                // Pick a random card from side deck
+                Card random = player.GetRandomCard(player.cards_side, rand);
+                if (random != null)
+                {
+                    gameplay.SelectSideDeckCard(player, random);
+                }
+            }
+        }        
 
         private IEnumerator AiTurn()
         {

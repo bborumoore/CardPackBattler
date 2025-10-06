@@ -335,6 +335,23 @@ namespace TcgEngine.Client
             SendAction(GameAction.SelectCard, mdata);
         }
 
+        // Add new method for side deck selection:
+        public void SelectSideDeckCard(Card card)
+        {
+            if (card == null)
+                return;
+
+            Game game_data = GetGameData();
+            Player player = game_data.GetPlayer(player_id);
+            
+            if (game_data.CanSelectSideDeckCard(player, card))
+            {
+                MsgCard msg = new MsgCard();  // Create the message
+                msg.card_uid = card.uid;
+                SendAction(GameAction.SelectSideDeck, msg);  // This calls the EXISTING SendAction<T> method below
+            }
+        }
+
         public void SelectPlayer(Player player)
         {
             MsgPlayer mdata = new MsgPlayer();

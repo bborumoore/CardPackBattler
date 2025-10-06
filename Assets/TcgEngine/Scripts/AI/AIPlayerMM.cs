@@ -28,6 +28,16 @@ namespace TcgEngine.AI
             Game game_data = gameplay.GetGameData();
             Player player = game_data.GetPlayer(player_id);
 
+             // NEW: Side deck selection
+            if (!is_playing && game_data.phase == GamePhase.SideDeckSelection)
+            {
+                if (!player.side_deck_selected && player.HasSideCards())
+                {
+                    is_playing = true;
+                    TimeTool.StartCoroutine(AiSelectSideDeck());
+                }
+            }
+
             if (!is_playing && game_data.IsPlayerTurn(player))
             {
                 is_playing = true;
@@ -41,6 +51,111 @@ namespace TcgEngine.AI
 
             if (!game_data.IsPlayerTurn(player) && ai_logic.IsRunning())
                 Stop();
+        }
+
+        // Add new coroutine for side deck AI decision:
+        private IEnumerator AiSelectSideDeck()
+        {
+            yield return new WaitForSeconds(1f);
+
+            Game game_data = gameplay.GetGameData();
+            Player player = game_data.GetPlayer(player_id);
+
+            if (player.HasSideCards() && !player.side_deck_selected)
+            {
+                // Use AI logic to evaluate best side deck card
+                Card best_card = EvaluateBestSideDeckCard(game_data, player);
+                
+                if (best_card != null)
+                {
+                    gameplay.SelectSideDeckCard(player, best_card);
+                    Debug.Log("AI selected side deck card: " + best_card.CardData.title);
+                }
+            }
+
+            is_playing = false;
+        }
+
+        // Evaluate which side deck card is best to select
+        private Card EvaluateBestSideDeckCard(Game game_data, Player player)
+        {
+            if (player.cards_side.Count == 0)
+                return null;
+
+            Card best_card = null;
+            float best_score = float.MinValue;
+
+            // Evaluate each card in side deck
+            foreach (Card card in player.cards_side)
+            {
+                float score = EvaluateSideDeckCard(game_data, player, card);
+                
+                if (score > best_score)
+                {
+                    best_score = score;
+                    best_card = card;
+                }
+            }
+
+            return best_card;
+        }
+
+        // Score a side deck card based on current game state
+        private float EvaluateSideDeckCard(Game game_data, Player player, Card card)
+        {
+            float score = 0f;
+
+            CardData data = card.CardData;
+            Player opponent = game_data.GetOpponentPlayer(player.player_id);
+
+            // Base value on card stats
+            if (data.type == CardType.Character)
+            {
+                score += data.attack * 10f;
+                score += data.hp * 8f;
+            }
+
+            // Value spells based on immediate impact
+            if (data.type == CardType.Spell)
+            {
+                score += 50f; // Spells are generally good for flexibility
+            }
+
+            // Consider abilities
+            if (data.abilities != null && data.abilities.Length > 0)
+            {
+                score += data.abilities.Length * 15f;
+            }
+
+            // Consider current hand size - if low, prefer drawing more cards
+            if (player.cards_hand.Count < 3)
+            {
+                // Prefer cards that might help with board presence
+                if (data.type == CardType.Character)
+                    score += 20f;
+            }
+
+            // Consider board state
+            if (opponent.cards_board.Count > player.cards_board.Count)
+            {
+                // Behind on board - prefer removal or strong characters
+                if (data.type == CardType.Spell)
+                    score += 30f;
+                if (data.type == CardType.Character && data.attack >= 3)
+                    score += 25f;
+            }
+
+            // Consider HP - if low, prefer defensive cards
+            if (player.hp < player.hp_max / 3)
+            {
+                if (data.hp > 0)
+                    score += data.hp * 5f;
+            }
+
+            // Add some randomness for variety
+            score += Random.Range(-10f, 10f);
+
+            return score;
         }
 
         private IEnumerator AiTurn()

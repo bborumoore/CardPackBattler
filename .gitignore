@@ -61,3 +61,29 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+
+Assets/TcgEngine/Scripts/AI/obj/
+
+Assets/TcgEngine/Scripts/Api/obj/
+
+Assets/TcgEngine/Scripts/Conditions/obj/
+
+Assets/TcgEngine/Scripts/Data/obj/
+
+Assets/TcgEngine/Scripts/GameClient/obj/
+
+Assets/TcgEngine/Scripts/GameLogic/obj/
+
+Assets/TcgEngine/Scripts/GameServer/bin.meta
+
+Assets/TcgEngine/Scripts/GameServer/obj.meta
+
+Assets/TcgEngine/Scripts/Menu/bin/
+
+Assets/TcgEngine/Scripts/Menu/obj/
+
+Assets/TcgEngine/Scripts/Menu/bin.meta
+
+Assets/TcgEngine/Scripts/Tools/obj/
+
+Assets/TcgEngine/Scripts/UI/obj/

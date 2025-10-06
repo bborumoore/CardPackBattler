@@ -31,6 +31,8 @@ namespace TcgEngine.Client
 
         public AbilityButton[] buttons;
 
+         public GameObject highlight;
+
         public Color glow_ally;
         public Color glow_enemy;
 
@@ -425,11 +427,28 @@ namespace TcgEngine.Client
             focus = false;
             status_alpha_target = 0f;
         }
-
         private void OnPointerDown(PointerEventData edata)
         {
             if (GameUI.IsOverUILayer("UI"))
                 return;
+
+            Game game_data = GameClient.Get()?.GetGameData();
+            if (game_data == null)
+                return;
+
+            // Get the card reference using the GetCard() method
+            Card card = GetCard();
+            
+            if (game_data.phase == GamePhase.SideDeckSelection && card != null)
+            {
+                Player player = game_data.GetPlayer(GameClient.Get().GetPlayerID());
+                if (player != null && player.cards_side.Contains(card) && !player.side_deck_selected)
+                {
+                    // This is a valid side deck selection
+                    GameClient.Get()?.SelectSideDeckCard(card);
+                    return;
+                }
+            }
 
             if (edata.button == PointerEventData.InputButton.Left)
             {
@@ -446,6 +465,13 @@ namespace TcgEngine.Client
             {
                 PlayerControls.Get().SelectCardRight(this);
             }
+        }
+
+        public void SetClickable(bool clickable)
+        {
+            // Visual indication that card is clickable
+            if (highlight != null)
+                highlight.SetActive(clickable);
         }
 
         private void OnPointerUp(PointerEventData edata)

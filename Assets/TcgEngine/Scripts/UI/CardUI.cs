@@ -50,10 +50,10 @@ namespace TcgEngine.UI
 
             SetCard(card.CardData, card.VariantData);
 
-            if (cost != null)
-                cost.text = card.GetMana().ToString();
-            if (cost != null && card.CardData.IsDynamicManaCost())
-                cost.text = "X";
+            //if (cost != null)
+            //    cost.text = card.GetMana().ToString();
+            //if (cost != null && card.CardData.IsDynamicManaCost())
+            //    cost.text = "X";
             if (attack != null)
                 attack.text = card.GetAttack().ToString();
             if (hp != null)
@@ -88,15 +88,15 @@ namespace TcgEngine.UI
                 hp_icon.enabled = card.IsBoardCard() || card.IsEquipment();
             if (hp != null)
                 hp.enabled = card.IsBoardCard() || card.IsEquipment();
-            if (cost_icon != null)
-                cost_icon.enabled = card.type != CardType.Hero;
-            if (cost != null)
-                cost.enabled = card.type != CardType.Hero;
+            // if (cost_icon != null)
+            //     cost_icon.enabled = card.type != CardType.Hero;
+            // if (cost != null)
+            //     cost.enabled = card.type != CardType.Hero;
 
-            if (cost != null)
-                cost.text = card.mana.ToString();
-            if (cost != null && card.IsDynamicManaCost())
-                cost.text = "X";
+            // if (cost != null)
+            //     cost.text = card.mana.ToString();
+            // if (cost != null && card.IsDynamicManaCost())
+            //     cost.text = "X";
             if (attack != null)
                 attack.text = card.attack.ToString();
             if (hp != null)
@@ -141,8 +141,8 @@ namespace TcgEngine.UI
                 attack_icon.material = mat;
             if (hp_icon != null)
                 hp_icon.material = mat;
-            if (cost_icon != null)
-                cost_icon.material = mat;
+            // if (cost_icon != null)
+            //     cost_icon.material = mat;
         }
 
         public void SetOpacity(float opacity)
@@ -159,14 +159,14 @@ namespace TcgEngine.UI
                 attack_icon.color = new Color(attack_icon.color.r, attack_icon.color.g, attack_icon.color.b, opacity);
             if (hp_icon != null)
                 hp_icon.color = new Color(hp_icon.color.r, hp_icon.color.g, hp_icon.color.b, opacity);
-            if (cost_icon != null)
-                cost_icon.color = new Color(cost_icon.color.r, cost_icon.color.g, cost_icon.color.b, opacity);
+            // if (cost_icon != null)
+            //     cost_icon.color = new Color(cost_icon.color.r, cost_icon.color.g, cost_icon.color.b, opacity);
             if (attack != null)
                 attack.color = new Color(attack.color.r, attack.color.g, attack.color.b, opacity);
             if (hp != null)
                 hp.color = new Color(hp.color.r, hp.color.g, hp.color.b, opacity);
-            if (cost != null)
-                cost.color = new Color(cost.color.r, cost.color.g, cost.color.b, opacity);
+            // if (cost != null)
+            //     cost.color = new Color(cost.color.r, cost.color.g, cost.color.b, opacity);
             if (card_title != null)
                 card_title.color = new Color(card_title.color.r, card_title.color.g, card_title.color.b, opacity);
             if (card_text != null)

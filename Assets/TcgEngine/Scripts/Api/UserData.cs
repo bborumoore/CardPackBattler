@@ -10,7 +10,6 @@ namespace TcgEngine
     /// Contain UserData retrieved from the web api database
     /// </summary>
 
-
     [System.Serializable]
     public class UserData
     {
@@ -177,79 +176,129 @@ namespace TcgEngine
             return value;
         }
 
-        public bool HasDeckCards(UserDeckData deck)
+        public void AddCard(string tid, string variant, int quantity = 1)
         {
-            foreach (UserCardData card in deck.cards)
+            UserCardData ucard = GetCard(tid, variant);
+            if (ucard != null)
             {
-                bool default_variant = true; //Count "" variant as valid for compatibilty with older vers
-                if (GetCardQuantity(card.tid, card.variant, default_variant) < card.quantity)
-                    return false;
+                ucard.quantity += quantity;
             }
-
-            return true;
-        }
-
-        public bool IsDeckValid(UserDeckData deck)
-        {
-            if (Authenticator.Get().IsApi())
-                return HasDeckCards(deck) && deck.IsValid();
-            return deck.IsValid();
-        }
-
-        public void AddDeck(UserDeckData deck)
-        {
-            List<UserDeckData> udecks = new List<UserDeckData>(decks);
-            udecks.Add(deck);
-            decks = udecks.ToArray();
-
-            foreach (UserCardData card in deck.cards)
+            else
             {
-                AddCard(card.tid, card.variant, 1);
-            }
-        }
-    
-        public void AddPack(string tid, int quantity)
-        {
-            bool found = false;
-            foreach (UserCardData pack in packs)
-            {
-                if (pack.tid == tid)
-                {
-                    found = true;
-                    pack.quantity += quantity;
-                }
-            }
-            if (!found)
-            {
-                UserCardData npack = new UserCardData();
-                npack.tid = tid;
-                npack.quantity = quantity;
-                List<UserCardData> apacks = new List<UserCardData>(packs);
-                apacks.Add(npack);
-                packs = apacks.ToArray();
-            }
-        }
-
-        public void AddCard(string tid, string variant, int quantity)
-        {
-            bool found = false;
-            foreach (UserCardData card in cards)
-            {
-                if (card.tid == tid && card.variant == variant)
-                {
-                    found = true;
-                    card.quantity += quantity;
-                }
-            }
-            if (!found)
-            {
-                UserCardData ncard = new UserCardData();
-                ncard.tid = tid;
-                ncard.variant = variant;
+                UserCardData ncard = new UserCardData(tid, variant);
                 ncard.quantity = quantity;
                 List<UserCardData> acards = new List<UserCardData>(cards);
                 acards.Add(ncard);
                 cards = acards.ToArray();
+            }
+        }
+
+        public void RemoveCard(string tid, string variant, int quantity = 1)
+        {
+            UserCardData ucard = GetCard(tid, variant);
+            if (ucard != null)
+            {
+                ucard.quantity -= quantity;
+                if (ucard.quantity <= 0)
+                {
+                    List<UserCardData> acards = new List<UserCardData>(cards);
+                    acards.Remove(ucard);
+                    cards = acards.ToArray();
+                }
+            }
+        }
+
+        public void AddPack(string tid, int quantity = 1)
+        {
+            UserCardData ucard = GetPack(tid);
+            if (ucard != null)
+            {
+                ucard.quantity += quantity;
+            }
+            else
+            {
+                UserCardData ncard = new UserCardData();
+                ncard.tid = tid;
+                ncard.quantity = quantity;
+                List<UserCardData> acards = new List<UserCardData>(packs);
+                acards.Add(ncard);
+                packs = acards.ToArray();
+            }
+        }
+
+        public void RemovePack(string tid, int quantity = 1)
+        {
+            UserCardData ucard = GetPack(tid);
+            if (ucard != null)
+            {
+                ucard.quantity -= quantity;
+                if (ucard.quantity <= 0)
+                {
+                    List<UserCardData> acards = new List<UserCardData>(packs);
+                    acards.Remove(ucard);
+                    packs = acards.ToArray();
+                }
+            }
+        }
+
+        public void AddCoins(int value)
+        {
+            coins += value;
+        }
+
+        public void RemoveCoins(int value)
+        {
+            coins -= value;
+        }
+
+        public void AddXP(int value)
+        {
+            xp += value;
+        }
+
+        public void AddAvatar(string avatar_tid)
+        {
+            if (!HasAvatar(avatar_tid))
+            {
+                List<string> aavat = new List<string>(avatars);
+                aavat.Add(avatar_tid);
+                avatars = aavat.ToArray();
+            }
+        }
+
+        public void AddCardback(string cardback_tid)
+        {
+            if (!HasCardback(cardback_tid))
+            {
+                List<string> acards = new List<string>(cardbacks);
+                acards.Add(cardback_tid);
+                cardbacks = acards.ToArray();
+            }
+        }
+
+        public void AddCardFromPack(PackData pack)
+        {
+            if (pack != null)
+            {
+                // Get all cards available in this pack
+                List<CardData> all_cards = CardData.GetAll(pack);
+                
+                if (all_cards.Count > 0)
+                {
+                    // Select a random card from the pack
+                    int rand = Random.Range(0, all_cards.Count);
+                    CardData selectedCard = all_cards[rand];
+                    
+                    // Create UserCardData from the selected CardData
+                    UserCardData ncard = new UserCardData();
+                    ncard.tid = selectedCard.id;
+                    ncard.variant = VariantData.GetDefault().id;
+                    ncard.quantity = 1;
+                    
+                    List<UserCardData> acards = new List<UserCardData>(cards);
+                    acards.Add(ncard);
+                    cards = acards.ToArray();
+                }
             }
         }
 
@@ -329,6 +378,46 @@ namespace TcgEngine
                 flist.Remove(username);
             friends = flist.ToArray();
         }
+
+        public bool HasDeckCards(UserDeckData deck)
+        {
+            foreach (UserCardData card in deck.cards)
+            {
+                bool default_variant = true; //Count "" variant as valid for compatibility with older vers
+                if (GetCardQuantity(card.tid, card.variant, default_variant) < card.quantity)
+                    return false;
+            }
+
+            return true;
+        }
+
+        public bool IsDeckValid(UserDeckData deck)
+        {
+            if (Authenticator.Get().IsApi())
+                return HasDeckCards(deck) && deck.IsValid();
+            return deck.IsValid();
+        }
+
+        public void AddDeck(UserDeckData deck)
+        {
+            List<UserDeckData> udecks = new List<UserDeckData>(decks);
+            udecks.Add(deck);
+            decks = udecks.ToArray();
+
+            foreach (UserCardData card in deck.cards)
+            {
+                AddCard(card.tid, card.variant, card.quantity);
+            }
+            
+            // Also add side deck cards to collection
+            if (deck.side_cards != null)
+            {
+                foreach (UserCardData card in deck.side_cards)
+                {
+                    AddCard(card.tid, card.variant, card.quantity);
+                }
+            }
+        }
     }
 
     [System.Serializable]
@@ -338,8 +427,12 @@ namespace TcgEngine
         public string title;
         public UserCardData hero;
         public UserCardData[] cards;
+        public UserCardData[] side_cards;  // NEW: Side deck cards
 
-        public UserDeckData() {}
+        public UserDeckData() 
+        {
+            side_cards = new UserCardData[0];  // Initialize
+        }
 
         public UserDeckData(string tid, string title)
         {
@@ -347,6 +440,7 @@ namespace TcgEngine
             this.title = title;
             hero = new UserCardData();
             cards = new UserCardData[0];
+            side_cards = new UserCardData[0];  // Initialize
         }
 
         public UserDeckData(DeckData deck)
@@ -359,6 +453,9 @@ namespace TcgEngine
             {
                 cards[i] = new UserCardData(deck.cards[i], VariantData.GetDefault());
             }
+            
+            // Initialize side deck - will be empty array if DeckData doesn't have side_cards field yet
+            side_cards = new UserCardData[0];
         }
 
         public int GetQuantity()
@@ -366,6 +463,17 @@ namespace TcgEngine
             int count = 0;
             foreach (UserCardData card in cards)
                 count += card.quantity;
+            return count;
+        }
+
+        public int GetSideQuantity()
+        {
+            int count = 0;
+            if (side_cards != null)
+            {
+                foreach (UserCardData card in side_cards)
+                    count += card.quantity;
+            }
             return count;
         }
 
@@ -380,6 +488,7 @@ namespace TcgEngine
             serializer.SerializeValue(ref title);
             serializer.SerializeValue(ref hero);
             NetworkTool.NetSerializeArray(serializer, ref cards);
+            NetworkTool.NetSerializeArray(serializer, ref side_cards);  // NEW: Serialize side deck
         }
 
         public static UserDeckData Default
@@ -391,6 +500,7 @@ namespace TcgEngine
                 deck.title = "";
                 deck.hero = new UserCardData();
                 deck.cards = new UserCardData[0];
+                deck.side_cards = new UserCardData[0];  // NEW: Initialize
                 return deck;
             }
         }
@@ -412,7 +522,6 @@ namespace TcgEngine
             this.quantity = 1;
         }
 
-
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             serializer.SerializeValue(ref tid);
@@ -420,6 +529,4 @@ namespace TcgEngine
             serializer.SerializeValue(ref quantity);
         }
     }
-
 }
-

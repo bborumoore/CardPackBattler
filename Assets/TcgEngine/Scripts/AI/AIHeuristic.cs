@@ -137,12 +137,12 @@ namespace TcgEngine.AI
             {
                 Player player = data.GetPlayer(ai_player_id);
                 Card card = data.GetCard(order.card_uid);
-                if (card.CardData.IsBoardCard())
-                    return 200 + (card.GetMana() * 5) - (30 * player.cards_board.Count); //High cost cards are better to play, better to play when not a lot of cards in play
-                else if (card.CardData.IsEquipment())
-                    return 200 + (card.GetMana() * 5) - (30 * player.cards_equip.Count);
-                else
-                    return 200 + (card.GetMana() * 5);
+                // if (card.CardData.IsBoardCard())
+                //     return 200 + (card.GetMana() * 5) - (30 * player.cards_board.Count); //High cost cards are better to play, better to play when not a lot of cards in play
+                // else if (card.CardData.IsEquipment())
+                //     return 200 + (card.GetMana() * 5) - (30 * player.cards_equip.Count);
+                // else
+                //     return 200 + (card.GetMana() * 5);
             }
 
             if (order.type == GameAction.Move)

@@ -45,7 +45,7 @@ namespace TcgEngine
         public Card(string card_id, string uid, int player_id) { this.card_id = card_id; this.uid = uid; this.player_id = player_id; }
 
         public virtual void Refresh() { exhausted = false; }
-        public virtual void ClearOngoing() { ongoing_status.Clear(); ongoing_traits.Clear(); ClearOngoingAbility(); attack_ongoing = 0; hp_ongoing = 0; mana_ongoing = 0; }
+        public virtual void ClearOngoing() { ongoing_status.Clear(); ongoing_traits.Clear(); ClearOngoingAbility(); attack_ongoing = 0; hp_ongoing = 0; /* mana_ongoing = 0;*/ }
 
         public virtual void Clear()
         {
@@ -58,7 +58,7 @@ namespace TcgEngine
         public virtual int GetHP() { return Mathf.Max(hp + hp_ongoing - damage, 0); }
         public virtual int GetHP(int offset) { return Mathf.Max(hp + hp_ongoing - damage + offset, 0); }
         public virtual int GetHPMax() { return Mathf.Max(hp + hp_ongoing, 0); }
-        public virtual int GetMana() { return Mathf.Max(mana + mana_ongoing, 0); }
+        // public virtual int GetMana() { return Mathf.Max(mana + mana_ongoing, 0); }
 
         public virtual void SetCard(CardData icard, VariantData cvariant)
         {
@@ -67,7 +67,7 @@ namespace TcgEngine
             variant_id = cvariant.id;
             attack = icard.attack;
             hp = icard.hp;
-            mana = icard.mana;
+            // mana = icard.mana;
             SetTraits(icard);
             SetAbilities(icard);
         }
@@ -558,9 +558,9 @@ namespace TcgEngine
 
             dest.attack = source.attack;
             dest.hp = source.hp;
-            dest.mana = source.mana;
+            // dest.mana = source.mana;
 
-            dest.mana_ongoing = source.mana_ongoing;
+            // dest.mana_ongoing = source.mana_ongoing;
             dest.attack_ongoing = source.attack_ongoing;
             dest.hp_ongoing = source.hp_ongoing;
 

@@ -9,7 +9,7 @@ namespace TcgEngine
         None = 0,
         Attack = 10,
         HP = 20,
-        Mana = 30,
+        // Mana = 30,
     }
 
     /// <summary>
@@ -36,10 +36,10 @@ namespace TcgEngine
                 return CompareInt(target.GetHP(), oper, value);
             }
 
-            if (type == ConditionStatType.Mana)
-            {
-                return CompareInt(target.GetMana(), oper, value);
-            }
+            // if (type == ConditionStatType.Mana)
+            // {
+            //     return CompareInt(target.GetMana(), oper, value);
+            // }
 
             return false;
         }
@@ -51,10 +51,10 @@ namespace TcgEngine
                 return CompareInt(target.hp, oper, value);
             }
 
-            if (type == ConditionStatType.Mana)
-            {
-                return CompareInt(target.mana, oper, value);
-            }
+            // if (type == ConditionStatType.Mana)
+            // {
+            //     return CompareInt(target.mana, oper, value);
+            // }
 
             return false;
         }

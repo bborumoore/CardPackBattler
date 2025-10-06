@@ -26,6 +26,7 @@ namespace TcgEngine.Gameplay
         public UnityAction<Card> onCardTransformed;
         public UnityAction<Card> onCardDiscarded;
         public UnityAction<int> onCardDrawn;
+        public UnityAction<Card, Player> onSideDeckCardSelected;  // Card selected, Player who selected
         public UnityAction<int> onRollValue;
 
         public UnityAction<AbilityData, Card> onAbilityStart;
@@ -121,8 +122,8 @@ namespace TcgEngine.Gameplay
                 //Hp / mana
                 player.hp_max = pdeck != null ? pdeck.start_hp : GameplayData.Get().hp_start;
                 player.hp = player.hp_max;
-                player.mana_max = pdeck != null ? pdeck.start_mana : GameplayData.Get().mana_start;
-                player.mana = player.mana_max;
+                // player.mana_max = pdeck != null ? pdeck.start_mana : GameplayData.Get().mana_start;
+                // player.mana = player.mana_max;
 
                 //Draw starting cards
                 int dcards = pdeck != null ? pdeck.start_cards : GameplayData.Get().cards_start;
@@ -167,9 +168,9 @@ namespace TcgEngine.Gameplay
             }
 
             //Mana 
-            player.mana_max += GameplayData.Get().mana_per_turn;
-            player.mana_max = Mathf.Min(player.mana_max, GameplayData.Get().mana_max);
-            player.mana = player.mana_max;
+            // player.mana_max += GameplayData.Get().mana_per_turn;
+            // player.mana_max = Mathf.Min(player.mana_max, GameplayData.Get().mana_max);
+            // player.mana = player.mana_max;
 
             //Turn timer 
             LevelData level = game_data.settings.GetLevel();
@@ -201,6 +202,33 @@ namespace TcgEngine.Gameplay
             TriggerPlayerCardsAbilityType(player, AbilityTrigger.StartOfTurn);
             TriggerPlayerSecrets(player, AbilityTrigger.StartOfTurn);
 
+             // Reset side deck selection flags
+            foreach (Player p in game_data.players)
+            {
+                p.side_deck_selected = false;
+            }
+            game_data.both_players_selected_side = false;
+
+            // Check if any player has side deck cards
+            bool has_side_cards = false;
+            foreach (Player p in game_data.players)
+            {
+                if (p.HasSideCards())
+                {
+                    has_side_cards = true;
+                    break;
+                }
+            }
+
+             if (has_side_cards)
+            {
+                GoToSideDeckSelection();
+            }
+            else
+            {
+                StartMainPhase();
+            }
+
             resolve_queue.AddCallback(StartMainPhase);
             resolve_queue.ResolveAll(0.2f);
         }
@@ -217,6 +245,12 @@ namespace TcgEngine.Gameplay
 
             CheckForWinner();
             StartTurn();
+        }
+
+        protected virtual void GoToSideDeckSelection()
+        {
+            game_data.phase = GamePhase.SideDeckSelection;
+            RefreshData();
         }
 
         public virtual void StartMainPhase()
@@ -379,6 +413,25 @@ namespace TcgEngine.Gameplay
             //Shuffle deck
             if (puzzle == null || !puzzle.dont_shuffle_deck)
                 ShuffleDeck(player.cards_deck);
+
+            player.cards_side.Clear();
+
+            if (deck.side_cards != null)
+            {
+                foreach (UserCardData userCard in deck.side_cards)
+                {
+                    if (userCard != null)
+                    {
+                        // Convert UserCardData to CardData by getting the card data
+                        CardData card = CardData.Get(userCard.tid);
+                        if (card != null)
+                        {
+                            Card acard = Card.Create(card, variant, player);
+                            player.cards_side.Add(acard);
+                        }
+                    }
+                }
+            }
         }
 
         //Set deck using custom deck in save file or database
@@ -411,11 +464,57 @@ namespace TcgEngine.Gameplay
                 }
             }
 
+            player.cards_side.Clear();
+            foreach (UserCardData card in deck.side_cards)
+            {
+                CardData icard = CardData.Get(card.tid);
+                VariantData variant = VariantData.Get(card.variant);
+                if (icard != null && variant != null)
+                {
+                    Card acard = Card.Create(icard, variant, player);
+                    player.cards_side.Add(acard);
+                }
+            }
+
             //Shuffle deck
             ShuffleDeck(player.cards_deck);
         }
 
         //---- Gameplay Actions --------------
+
+        public virtual void SelectSideDeckCard(Player player, Card card)
+        {
+            if (game_data.CanSelectSideDeckCard(player, card))
+            {
+                // Remove card from side deck
+                player.cards_side.Remove(card);
+                
+                // Add to hand
+                player.cards_hand.Add(card);
+                
+                // Mark player as having selected
+                player.side_deck_selected = true;
+
+                // Add to history
+                if (!is_ai_predict)
+                    player.AddHistory(GameAction.SelectSideDeck, card);
+
+                RefreshData();
+                onSideDeckCardSelected?.Invoke(card, player);
+
+                // Check if both players have selected
+                if (game_data.AreBothPlayersReadyForMain())
+                {
+                    resolve_queue.AddCallback(TransitionToMainPhase);
+                    resolve_queue.ResolveAll(0.5f);
+                }
+            }
+        }
+
+        protected virtual void TransitionToMainPhase()
+        {
+            StartMainPhase();
+        }
 
         public virtual void PlayCard(Card card, Slot slot, bool skip_cost = false)
         {
@@ -424,8 +523,8 @@ namespace TcgEngine.Gameplay
                 Player player = game_data.GetPlayer(card.player_id);
 
                 //Cost
-                if (!skip_cost)
-                    player.PayMana(card);
+                // if (!skip_cost)
+                //     player.PayMana(card);
 
                 //Play card
                 player.RemoveCardFromAllGroups(card);
@@ -463,16 +562,16 @@ namespace TcgEngine.Gameplay
                 UpdateOngoing();
 
                 //Trigger abilities
-                if (card.CardData.IsDynamicManaCost())
-                {
-                    GoToSelectorCost(card);
-                }
-                else
-                {
+                // if (card.CardData.IsDynamicManaCost())
+                // {
+                //     GoToSelectorCost(card);
+                // }
+                // else
+                // {
                     TriggerSecrets(AbilityTrigger.OnPlayOther, card); //After playing card
                     TriggerCardAbilityType(AbilityTrigger.OnPlay, card);
                     TriggerOtherCardsAbilityType(AbilityTrigger.OnPlayOther, card);
-                }
+                // }
 
                 RefreshData();
 
@@ -1261,7 +1360,7 @@ namespace TcgEngine.Gameplay
             //Pay cost
             if (iability.trigger == AbilityTrigger.Activate || iability.trigger == AbilityTrigger.None)
             {
-                player.mana -= iability.mana_cost;
+                // player.mana -= iability.mana_cost;
                 caster.exhausted = caster.exhausted || iability.exhaust;
             }
 
@@ -1530,8 +1629,8 @@ namespace TcgEngine.Gameplay
                 card.attack_ongoing += status.value;
             if (status.type == StatusType.AddHP)
                 card.hp_ongoing += status.value;
-            if (status.type == StatusType.AddManaCost)
-                card.mana_ongoing += status.value;
+            // if (status.type == StatusType.AddManaCost)
+            //     card.mana_ongoing += status.value;
         }
 
         //---- Secrets ------------
@@ -1801,18 +1900,18 @@ namespace TcgEngine.Gameplay
 
             if (game_data.selector == SelectorType.SelectorCost)
             {
-                if (select_cost >= 0 && select_cost < 10 && select_cost <= player.mana)
-                {
+                // if (select_cost >= 0 && select_cost < 10 && select_cost <= player.mana)
+                // {
                     game_data.selector = SelectorType.None;
                     game_data.selected_value = select_cost;
-                    player.mana -= select_cost;
+                    // player.mana -= select_cost;
                     RefreshData();
 
                     TriggerSecrets(AbilityTrigger.OnPlayOther, caster);
                     TriggerCardAbilityType(AbilityTrigger.OnPlay, caster);
                     TriggerOtherCardsAbilityType(AbilityTrigger.OnPlayOther, caster);
                     resolve_queue.ResolveAll();
-                }
+                // }
             }
         }
 
@@ -1836,10 +1935,10 @@ namespace TcgEngine.Gameplay
             if (card != null)
             {
                 Player player = game_data.GetPlayer(card.player_id);
-                if (card.CardData.IsDynamicManaCost())
-                    player.mana += game_data.selected_value;
-                else
-                    player.mana += card.CardData.cost;
+                // if (card.CardData.IsDynamicManaCost())
+                //     player.mana += game_data.selected_value;
+                // else
+                //     player.mana += card.CardData.cost;
 
                 player.RemoveCardFromAllGroups(card);
                 player.AddCard(player.cards_hand, card);

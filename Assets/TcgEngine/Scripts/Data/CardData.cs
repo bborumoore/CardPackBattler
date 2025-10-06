@@ -39,7 +39,7 @@ namespace TcgEngine
         public CardType type;
         public TeamData team;
         public RarityData rarity;
-        public int mana;
+        // public int mana;
         public int attack;
         public int hp;
 
@@ -171,10 +171,10 @@ namespace TcgEngine
             return type == CardType.Equipment;
         }
 
-        public bool IsDynamicManaCost()
+        /* public bool IsDynamicManaCost()
         {
             return mana > 99;
-        }
+        } */
 
         public bool HasTrait(string trait)
         {

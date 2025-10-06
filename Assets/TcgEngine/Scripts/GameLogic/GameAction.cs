@@ -27,6 +27,8 @@ namespace TcgEngine
         public const ushort CancelSelect = 1039;
         public const ushort EndTurn = 1040;
         public const ushort Resign = 1050;
+        public const ushort SelectSideCard = 1060;
+        public const ushort SelectSideDeck = 1061;
         public const ushort ChatMessage = 1090;
 
         public const ushort PlayerSettings = 1100; //After connect, send player data
@@ -100,6 +102,10 @@ namespace TcgEngine
                 return "resign";
             if (type == GameAction.ChatMessage)
                 return "chat";
+            if (type == GameAction.SelectSideDeck)
+            return "select_sidedeck";
+            if (type == GameAction.SelectSideCard)
+            return "select_sidecard";
             return type.ToString();
         }
     }

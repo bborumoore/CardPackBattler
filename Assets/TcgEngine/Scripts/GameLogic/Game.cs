@@ -38,6 +38,7 @@ namespace TcgEngine
         public string ability_triggerer;
         public int rolled_value;
         public int selected_value;
+        public bool both_players_selected_side = false; //tracks if both players have locked in side card selection
 
         //Other reference arrays 
         public HashSet<string> ability_played = new HashSet<string>();
@@ -106,12 +107,12 @@ namespace TcgEngine
                 return false;
 
             Player player = GetPlayer(card.player_id);
-            if (!skip_cost && !player.CanPayMana(card))
-                return false; //Cant pay mana
+            // if (!skip_cost && !player.CanPayMana(card))
+            //     return false; //Cant pay mana
             if (!player.HasCard(player.cards_hand, card))
                 return false; // Card not in hand
-            if (player.is_ai && card.CardData.IsDynamicManaCost() && player.mana == 0)
-                return false; // AI cant play X-cost card at 0 cost
+            // if (player.is_ai && card.CardData.IsDynamicManaCost() && player.mana == 0)
+            //     return false; // AI cant play X-cost card at 0 cost
 
             if (card.CardData.IsBoardCard())
             {
@@ -225,11 +226,47 @@ namespace TcgEngine
                 return false; //Not an activated ability
 
             Player player = GetPlayer(card.player_id);
-            if (!player.CanPayAbility(card, ability))
-                return false; //Cant pay for ability
+            // if (!player.CanPayAbility(card, ability))
+            //     return false; //Cant pay for ability
 
             if (!ability.AreTriggerConditionsMet(this, card))
                 return false; //Conditions not met
+
+            return true;
+        }
+
+        //Validation to check if player can pull a side card
+        public bool CanSelectSideDeckCard(Player player, Card card)
+        {
+            if (card == null || player == null)
+                return false;
+
+            if (phase != GamePhase.SideDeckSelection)
+                return false;  // Not the right phase
+
+            if (player.side_deck_selected)
+                return false;  // Already selected this turn
+
+            if (!player.HasSideCards())
+                return false;  // No side deck cards available
+
+            if (!player.cards_side.Contains(card))
+                return false;  // Card not in player's side deck
+
+            return true;
+        }
+
+        //Validate that both sides have been locked in, and game can progress to main phase
+        public bool AreBothPlayersReadyForMain()
+        {
+            if (phase != GamePhase.SideDeckSelection)
+                return false;
+
+            foreach (Player player in players)
+            {
+                if (player.HasSideCards() && !player.side_deck_selected)
+                    return false;  // Still waiting for this player
+            }
 
             return true;
         }
@@ -241,8 +278,8 @@ namespace TcgEngine
                 return false; //This card cant cast
 
             Player player = GetPlayer(card.player_id);
-            if (!player.CanPayAbility(card, ability))
-                return false; //Cant pay for ability
+            // if (!player.CanPayAbility(card, ability))
+            //     return false; //Cant pay for ability
 
             if (!ability.AreTriggerConditionsMet(this, card))
                 return false; //Conditions not met
@@ -254,8 +291,8 @@ namespace TcgEngine
         {
             if (card == null)
                 return false;
-            if (card.CardData.IsDynamicManaCost())
-                return true; //Cost not decided so condition could be false
+            // if (card.CardData.IsDynamicManaCost())
+            //     return true; //Cost not decided so condition could be false
 
             foreach (AbilityData ability in card.GetAbilities())
             {
@@ -594,6 +631,7 @@ namespace TcgEngine
         None = 0,
         Mulligan = 5,
         StartTurn = 10, //Start of turn resolution
+        SideDeckSelection = 12, //Simultaneous Side Card selection
         Main = 20,      //Main play phase
         EndTurn = 30,   //End of turn resolutions
     }
